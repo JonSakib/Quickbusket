@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QuickBasket</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f8f8f8;
+    }
+    header {
+      background-color: #2e7d32;
+      color: white;
+      padding: 1em;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    nav a {
+      color: white;
+      margin: 0 1em;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    .container {
+      padding: 2em;
+    }
+    .categories, .products {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1em;
+      margin-top: 1em;
+    }
+    .card {
+      background: white;
+      padding: 1em;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      flex: 1 1 200px;
+      text-align: center;
+      cursor: pointer;
+    }
+    .card img {
+      width: 100px;
+      height: 100px;
+      object-fit: contain;
+      margin-bottom: 1em;
+    }
+    .card button {
+      background-color: #2e7d32;
+      color: white;
+      border: none;
+      padding: 0.5em 1em;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .cart {
+      margin-top: 2em;
+    }
+    .cart table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .cart th, .cart td {
+      padding: 1em;
+      border-bottom: 1px solid #ddd;
+    }
+    .checkout {
+      text-align: right;
+      margin-top: 1em;
+    }
+    .checkout button {
+      background-color: #388e3c;
+      color: white;
+      padding: 0.75em 1.5em;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div><strong>QuickBasket</strong></div>
+    <nav>
+      <a href="#" onclick="showPage('home')">Home</a>
+      <a href="#" onclick="showPage('cart')">Cart</a>
+    </nav>
+  </header>
+
+  <div class="container" id="home">
+    <h2>Shop by Category</h2>
+    <div class="categories">
+      <div class="card" onclick="filterByCategory('Fruits & Vegetables')">Fruits & Vegetables</div>
+      <div class="card" onclick="filterByCategory('Dairy & Eggs')">Dairy & Eggs</div>
+      <div class="card" onclick="filterByCategory('Beverages')">Beverages</div>
+      <div class="card" onclick="filterByCategory('Snacks')">Snacks</div>
+    </div>
+
+    <h2 style="margin-top: 2em;">Featured Items</h2>
+    <div class="products" id="product-list"></div>
+  </div>
+
+  <div class="container" id="cart" style="display:none;">
+    <h2>Your Cart</h2>
+    <div class="cart">
+      <table id="cart-table">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Quantity</th>
+            <th>Price</th>
+            <th>Total</th>
+            <th>Remove</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <div class="checkout">
+        <strong>Total: $<span id="cart-total">0.00</span></strong>
+        <br><br>
+        <button onclick="checkout()">Checkout</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const products = [
+        { name: 'Tomatoes', price: 1.99, category: 'Fruits & Vegetables' },
+        { name: 'Milk', price: 2.49, category: 'Dairy & Eggs' },
+        { name: 'Banana', price: 0.29, category: 'Fruits & Vegetables' },
+        { name: 'Juice', price: 3.99, category: 'Beverages' },
+        { name: 'Chips', price: 1.49, category: 'Snacks' }
+      ];
+
+      const cart = {};
+
+      function renderProducts(filter = null) {
+        const list = document.getElementById('product-list');
+        list.innerHTML = '';
+        const filtered = filter ? products.filter(p => p.category === filter) : products;
+        filtered.forEach((product, index) => {
+          const card = document.createElement('div');
+          card.className = 'card';
+          card.innerHTML = `
+            <img src="https://via.placeholder.com/100?text=${product.name}" alt="${product.name}">
+            <p>${product.name}</p>
+            <p>$${product.price.toFixed(2)}</p>
+            <button onclick="addToCart(${products.indexOf(product)})">Add to Cart</button>
+          `;
+          list.appendChild(card);
+        });
+      }
+
+      window.addToCart = function(index) {
+        const product = products[index];
+        if (!cart[product.name]) {
+          cart[product.name] = { quantity: 1, price: product.price };
+        } else {
+          cart[product.name].quantity++;
+        }
+        renderCart();
+      };
+
+      function renderCart() {
+        const tbody = document.querySelector('#cart-table tbody');
+        const totalDisplay = document.getElementById('cart-total');
+        tbody.innerHTML = '';
+        let total = 0;
+        for (let item in cart) {
+          const row = document.createElement('tr');
+          const quantity = cart[item].quantity;
+          const price = cart[item].price;
+          const itemTotal = quantity * price;
+          total += itemTotal;
+          row.innerHTML = `
+            <td>${item}</td>
+            <td>${quantity}</td>
+            <td>$${price.toFixed(2)}</td>
+            <td>$${itemTotal.toFixed(2)}</td>
+            <td><button onclick="removeFromCart('${item}')">Remove</button></td>
+          `;
+          tbody.appendChild(row);
+        }
+        totalDisplay.innerText = total.toFixed(2);
+      }
+
+      window.removeFromCart = function(item) {
+        delete cart[item];
+        renderCart();
+      };
+
+      window.checkout = function() {
+        alert('Thank you for your purchase!');
+        for (let item in cart) delete cart[item];
+        renderCart();
+      };
+
+      window.showPage = function(page) {
+        document.getElementById('home').style.display = page === 'home' ? 'block' : 'none';
+        document.getElementById('cart').style.display = page === 'cart' ? 'block' : 'none';
+      };
+
+      window.filterByCategory = function(category) {
+        renderProducts(category);
+      };
+
+      renderProducts();
+    });
+  </script>
+</body>
+</html>
